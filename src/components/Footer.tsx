@@ -1,7 +1,12 @@
 export default function Footer() {
   return (
     <footer className="absolute bottom-0 left-0 right-0 pb-4 text-center">
-      <div className="flex items-center justify-center space-x-2 text-noc-muted text-sm">
+      <a
+        href="https://www.vluma.com.br"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-center space-x-2 text-noc-muted text-sm hover:opacity-80 transition-opacity"
+      >
         <img
           src="/logo.png"
           alt="VLUMA"
@@ -11,15 +16,10 @@ export default function Footer() {
           onError={(e) => { e.currentTarget.style.display = 'none' }}
         />
         <span>Designed & Developed by </span>
-        <a
-          href="https://www.vluma.com.br"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-semibold bg-gradient-to-r from-noc-primary to-noc-accent bg-clip-text text-transparent hover:opacity-80 transition-opacity"
-        >
+        <span className="font-semibold bg-gradient-to-r from-noc-primary to-noc-accent bg-clip-text text-transparent">
           VLUMA
-        </a>
-      </div>
+        </span>
+      </a>
     </footer>
   )
 }
