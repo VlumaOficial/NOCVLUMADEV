@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LogOut } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -7,6 +7,46 @@ import MainLayout from '../layouts/MainLayout'
 export default function Dashboard() {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const checkUserRole = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) {
+          navigate('/')
+          return
+        }
+
+        // Buscar role do usuário na tabela profiles
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+
+        if (profile?.role) {
+          switch (profile.role) {
+            case 'super_admin':
+              navigate('/admin/clientes')
+              break
+            case 'owner':
+            case 'admin':
+              // Permanecer no dashboard normal
+              break
+            case 'operator':
+              // Permanecer no dashboard normal
+              break
+            default:
+              navigate('/')
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao verificar role:', error)
+      }
+    }
+
+    checkUserRole()
+  }, [navigate])
 
   const handleLogout = async () => {
     setLoading(true)
