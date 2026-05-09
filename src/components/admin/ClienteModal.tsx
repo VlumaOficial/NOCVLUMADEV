@@ -1,15 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-
-interface Cliente {
-  id?: string
-  name: string
-  slug: string
-  plan: 'starter' | 'professional' | 'enterprise'
-  device_limit: number
-  status: 'active' | 'suspended'
-}
+import type { Cliente } from '../../types/cliente'
 
 interface ClienteModalProps {
   isOpen: boolean
@@ -20,11 +12,14 @@ interface ClienteModalProps {
 
 export default function ClienteModal({ isOpen, onClose, onSave, cliente }: ClienteModalProps) {
   const [formData, setFormData] = useState<Cliente>({
+    id: '',
     name: '',
     slug: '',
     plan: 'starter',
     device_limit: 10,
-    status: 'active'
+    status: 'active',
+    created_at: '',
+    updated_at: ''
   })
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})

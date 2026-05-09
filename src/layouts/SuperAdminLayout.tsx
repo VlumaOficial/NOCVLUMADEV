@@ -1,5 +1,4 @@
-import { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Outlet } from 'react-router-dom'
 import { 
   LayoutDashboard, 
   Users, 
@@ -9,17 +8,13 @@ import {
 } from 'lucide-react'
 import Footer from '../components/Footer'
 
-interface SuperAdminLayoutProps {
-  children: React.ReactNode
-}
-
 interface MenuItem {
   icon: React.ReactNode
   label: string
   path: string
 }
 
-export default function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
+export default function SuperAdminLayout() {
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -112,7 +107,7 @@ export default function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col bg-noc-bg relative">
-        {children}
+        <Outlet />
         <Footer />
       </div>
     </div>

@@ -2,16 +2,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Pencil, ToggleLeft, ToggleRight } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import ClienteModal from '../../components/admin/ClienteModal'
-
-interface Cliente {
-  id: string
-  name: string
-  slug: string
-  plan: 'starter' | 'professional' | 'enterprise'
-  status: 'active' | 'suspended' | 'cancelled'
-  device_limit: number
-  created_at: string
-}
+import type { Cliente } from '../../types/cliente'
 
 export default function Clientes() {
   const [clientes, setClientes] = useState<Cliente[]>([])
