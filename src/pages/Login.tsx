@@ -38,9 +38,9 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-noc-bg flex flex-col justify-center items-center p-4">
+    <div className="min-h-screen bg-noc-bg flex flex-col justify-center items-center relative p-4">
       {/* Card Principal */}
-      <div className="w-full max-w-md bg-noc-surface border border-noc-border rounded-lg p-8 shadow-2xl">
+      <div className="w-full max-w-md bg-noc-surface border border-noc-border rounded-lg p-8 shadow-[0_0_20px_rgba(74,222,128,0.1)]">
         {/* Logo e Título */}
         <div className="text-center mb-8">
           <img 
@@ -121,15 +121,20 @@ export default function Login() {
         </form>
       </div>
 
-      {/* Rodapé */}
-      <div className="mt-8 text-center">
+      {/* Rodapé Fixo na Base */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
         <div className="flex items-center justify-center space-x-2 text-noc-muted text-sm">
           <img 
             src="/logo.png" 
             alt="VLUMA Logo" 
-            className="w-6 h-6"
+            className="w-8 h-8"
           />
-          <span>Designed & Developed by VLUMA</span>
+          <span>Designed & Developed by </span>
+          <span 
+            className="font-semibold bg-gradient-to-r from-noc-primary to-noc-accent bg-clip-text text-transparent"
+          >
+            VLUMA
+          </span>
         </div>
       </div>
     </div>
