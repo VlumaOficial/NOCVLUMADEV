@@ -45,8 +45,12 @@ export default function Login() {
         <div className="text-center mb-8">
           <img 
             src="/logo.png" 
-            alt="VLUMA Logo" 
-            className="w-20 h-20 mx-auto mb-4"
+            alt="VLUMA" 
+            width={80} 
+            height={80}
+            style={{ objectFit: 'contain' }}
+            onError={(e) => { e.currentTarget.style.display = 'none' }}
+            className="mx-auto mb-4"
           />
           <h1 className="text-3xl font-bold text-noc-primary mb-2">
             NOC VLUMA
@@ -126,8 +130,11 @@ export default function Login() {
         <div className="flex items-center justify-center space-x-2 text-noc-muted text-sm">
           <img 
             src="/logo.png" 
-            alt="VLUMA Logo" 
-            className="w-8 h-8"
+            alt="VLUMA" 
+            width={32} 
+            height={32}
+            style={{ objectFit: 'contain' }}
+            onError={(e) => { e.currentTarget.style.display = 'none' }}
           />
           <span>Designed & Developed by </span>
           <span 
