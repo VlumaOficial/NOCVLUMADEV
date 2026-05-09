@@ -13,6 +13,16 @@ module.exports = {
         sm: "calc(var(--radius) - 4px)",
       },
       colors: {
+        // NOC VLUMA Custom Palette
+        'noc-bg': '#0A1628',
+        'noc-surface': '#0F2040',
+        'noc-primary': '#4ADE80',
+        'noc-accent': '#F59E0B',
+        'noc-text': '#E2E8F0',
+        'noc-muted': '#64748B',
+        'noc-border': '#1E3A5F',
+        
+        // Shadcn/ui default colors (keep for compatibility)
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
