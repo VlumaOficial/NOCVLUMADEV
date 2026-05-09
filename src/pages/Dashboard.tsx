@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LogOut } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import MainLayout from '../layouts/MainLayout'
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(false)
@@ -20,7 +21,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-noc-bg">
+    <MainLayout>
       {/* Header */}
       <header className="bg-noc-surface border-b border-noc-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -89,6 +90,6 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
-    </div>
+    </MainLayout>
   )
 }
