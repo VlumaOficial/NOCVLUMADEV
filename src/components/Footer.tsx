@@ -11,7 +11,7 @@ export default function Footer() {
           onError={(e) => { e.currentTarget.style.display = 'none' }}
         />
         <span>Designed & Developed by </span>
-        
+        <a
           href="https://www.vluma.com.br"
           target="_blank"
           rel="noopener noreferrer"
