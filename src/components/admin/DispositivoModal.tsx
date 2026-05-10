@@ -165,6 +165,13 @@ export default function DispositivoModal({ isOpen, onClose, onSave, device }: Di
   }
 
   const handleSubmit = async () => {
+    if (etapa < 3) {
+      if (etapa === 1 && !validateEtapa1()) return
+      if (etapa === 2 && !validateEtapa2()) return
+      setEtapa(etapa + 1)
+      return
+    }
+    
     setLoading(true)
     
     try {
