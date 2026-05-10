@@ -56,23 +56,41 @@ export async function criarHostZabbix(params: {
   snmp_community?: string | null
   snmp_version?: string | null
   zabbix_proxy_name?: string | null
+  tenant_name?: string | null
 }): Promise<string> {
-  
-  // Definir interface baseada no método de monitoramento
-  const interfaceType = params.monitor_method === 'snmp_v2c' || 
-    params.monitor_method === 'snmp_v3' ? 2 : 1 // 1=agent, 2=snmp
+
+  // 1. Buscar ou criar grupo de hosts do tenant
+  let groupid = '2' // fallback para grupo padrão
+  if (params.tenant_name) {
+    const grupos = await callZabbixAPI('hostgroup.get', {
+      output: ['groupid', 'name'],
+      filter: { name: [params.tenant_name] }
+    })
+    if (grupos.length > 0) {
+      groupid = grupos[0].groupid
+    } else {
+      // Criar grupo com nome do tenant
+      const novoGrupo = await callZabbixAPI('hostgroup.create', {
+        name: params.tenant_name
+      })
+      groupid = novoGrupo.groupids[0]
+    }
+  }
+
+  // 2. Definir interface baseada no método de monitoramento
+  const isSNMP = params.monitor_method === 'snmp_v2c' || 
+                 params.monitor_method === 'snmp_v3'
   
   const hostInterface: Record<string, unknown> = {
-    type: interfaceType,
+    type: isSNMP ? 2 : 1,
     main: 1,
     useip: 1,
     ip: params.ip,
     dns: '',
-    port: interfaceType === 2 ? '161' : '10050'
+    port: isSNMP ? '161' : '10050'
   }
 
-  // Adicionar detalhes SNMP se necessário
-  if (interfaceType === 2) {
+  if (isSNMP) {
     hostInterface.details = {
       version: params.monitor_method === 'snmp_v3' ? 3 : 2,
       community: params.snmp_community || 'public',
@@ -80,49 +98,42 @@ export async function criarHostZabbix(params: {
     }
   }
 
-  // Buscar grupo de hosts padrão
-  const grupos = await callZabbixAPI('hostgroup.get', {
-    output: ['groupid', 'name'],
-    filter: { name: ['Linux servers'] }
-  })
-  
-  const groupid = grupos.length > 0 ? grupos[0].groupid : '2'
-
-  // Buscar template baseado no método
+  // 3. Buscar template adequado
   let templateName = 'ICMP Ping'
-  if (params.monitor_method === 'snmp_v2c' || params.monitor_method === 'snmp_v3') {
+  if (isSNMP) {
     templateName = 'Network Generic Device by SNMP'
   }
-  
+
   const templates = await callZabbixAPI('template.get', {
     output: ['templateid', 'name'],
     filter: { name: [templateName] }
   })
 
+  // 4. Montar parâmetros do host
   const hostParams: Record<string, unknown> = {
     host: params.name,
     name: params.name,
     interfaces: [hostInterface],
-    groups: [{ groupid }]
+    groups: [{ groupid }],
   }
 
-  // Adicionar proxy se fornecido
+  // 5. Adicionar template se encontrado
+  if (templates.length > 0) {
+    hostParams.templates = [{ templateid: templates[0].templateid }]
+  }
+
+  // 6. Adicionar proxy se fornecido (Zabbix 7.0: usar proxyid direto)
   if (params.zabbix_proxy_name) {
     const proxies = await callZabbixAPI('proxy.get', {
       output: ['proxyid', 'name'],
       filter: { name: [params.zabbix_proxy_name] }
     })
     if (proxies.length > 0) {
-      hostParams.monitored_by = 1
       hostParams.proxyid = proxies[0].proxyid
     }
   }
 
-  // Adicionar template se encontrado
-  if (templates.length > 0) {
-    hostParams.templates = [{ templateid: templates[0].templateid }]
-  }
-
+  // 7. Criar host e retornar ID
   const result = await callZabbixAPI('host.create', hostParams)
   return result.hostids[0]
 }

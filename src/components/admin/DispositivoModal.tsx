@@ -206,6 +206,7 @@ export default function DispositivoModal({ isOpen, onClose, onSave, device }: Di
           zabbixHostId = device.zabbix_host_id
         } else {
           // Criar novo
+          const tenantSelecionado = tenants.find((t: any) => t.id === formData.tenant_id)
           const proxySelecionado = proxies.find((p: any) => p.id === formData.proxy_id)
           const zabbixProxyName = proxySelecionado?.zabbix_proxy_name || null
           
@@ -214,7 +215,8 @@ export default function DispositivoModal({ isOpen, onClose, onSave, device }: Di
             ip: formData.ip.trim(),
             monitor_method: formData.monitor_method,
             snmp_community: formData.snmp_community?.trim() || null,
-            zabbix_proxy_name: zabbixProxyName
+            zabbix_proxy_name: zabbixProxyName,
+            tenant_name: tenantSelecionado?.name || null
           })
         }
       } catch (error) {
