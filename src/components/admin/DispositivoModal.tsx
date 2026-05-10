@@ -82,7 +82,7 @@ export default function DispositivoModal({ isOpen, onClose, onSave, device }: Di
     }
   }, [isOpen])
 
-  const validateEtapa1 = () => {
+  const _validateEtapa1 = () => {
     const newErrors: Record<string, string> = {}
     
     if (!formData.tenant_id.trim()) {
@@ -107,7 +107,7 @@ export default function DispositivoModal({ isOpen, onClose, onSave, device }: Di
     return Object.keys(newErrors).length === 0
   }
 
-  const validateEtapa2 = () => {
+  const _validateEtapa2 = () => {
     const newErrors: Record<string, string> = {}
     
     if (!formData.monitor_method) {
@@ -166,8 +166,8 @@ export default function DispositivoModal({ isOpen, onClose, onSave, device }: Di
 
   const handleSubmit = async () => {
     if (etapa < 3) {
-      if (etapa === 1 && !validateEtapa1()) return
-      if (etapa === 2 && !validateEtapa2()) return
+      if (etapa === 1 && !_validateEtapa1()) return
+      if (etapa === 2 && !_validateEtapa2()) return
       setEtapa(etapa + 1)
       return
     }
