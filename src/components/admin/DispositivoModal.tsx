@@ -98,7 +98,7 @@ export default function DispositivoModal({ isOpen, onClose, onSave, device }: Di
     }
     
     // Validar formato IP xxx.xxx.xxx.xxx
-    const ipRegex = /^(\d{1,3}\.){1}(\d{1,3}\.){1}(\d{1,3}\.)$/
+    const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/
     if (formData.ip && !ipRegex.test(formData.ip)) {
       newErrors.ip = 'Formato de IP inválido. Use xxx.xxx.xxx.xxx'
     }
