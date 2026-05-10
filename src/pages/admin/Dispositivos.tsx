@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import DispositivoModal from '../../components/admin/DispositivoModal'
+import { sincronizarStatusDispositivos, excluirHostZabbix } from '../../lib/zabbix'
 import type { Device } from '../../types/device'
 
 export default function Dispositivos() {
@@ -32,6 +33,32 @@ export default function Dispositivos() {
         .order('name')
       
       setTenants(tenantsData || [])
+      
+      // Sincronizar status com Zabbix
+      if (data && data.length > 0) {
+        try {
+          const statusAtualizados = await sincronizarStatusDispositivos(data)
+          
+          // Atualizar dispositivos com status sincronizado
+          for (const dispositivo of statusAtualizados) {
+            await supabase
+              .from('devices')
+              .update({ 
+                status: dispositivo.status,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', dispositivo.id)
+          }
+          
+          // Atualizar estado local
+          setDevices(prev => prev.map(d => {
+            const atualizado = statusAtualizados.find(s => s.id === d.id)
+            return atualizado ? { ...d, status: atualizado.status } : d
+          }))
+        } catch (error) {
+          console.error('Erro ao sincronizar status:', error)
+        }
+      }
     } catch (error) {
       console.error('Erro ao carregar dispositivos:', error)
     } finally {
@@ -143,7 +170,18 @@ export default function Dispositivos() {
     if (!deviceExcluindo) return
 
     setLoading(true)
+    
     try {
+      // Excluir do Zabbix primeiro
+      if (deviceExcluindo.zabbix_host_id) {
+        try {
+          await excluirHostZabbix(deviceExcluindo.zabbix_host_id)
+        } catch (error) {
+          console.error('Erro ao excluir host do Zabbix:', error)
+        }
+      }
+
+      // Excluir do Supabase
       const { error } = await supabase
         .from('devices')
         .delete()

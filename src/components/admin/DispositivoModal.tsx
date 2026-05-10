@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, ChevronLeft, CheckCircle, XCircle } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { getHosts, criarHostZabbix, atualizarHostZabbix } from '../../lib/zabbix'
 import type { Device } from '../../types/device'
 
 interface DispositivoModalProps {
@@ -190,11 +191,48 @@ export default function DispositivoModal({ isOpen, onClose, onSave, device }: Di
         status: 'unknown'
       }
 
+      let zabbixHostId: string | null = null
+      let zabbixError: string | null = null
+
+      try {
+        if (device?.id) {
+          // Atualizar
+          await atualizarHostZabbix(device.zabbix_host_id!, {
+            name: formData.name.trim(),
+            ip: formData.ip.trim(),
+            monitor_method: formData.monitor_method,
+            snmp_community: formData.snmp_community?.trim() || null
+          })
+          zabbixHostId = device.zabbix_host_id
+        } else {
+          // Criar novo
+          const proxySelecionado = proxies.find((p: any) => p.id === formData.proxy_id)
+          const zabbixProxyName = proxySelecionado?.zabbix_proxy_name || null
+          
+          zabbixHostId = await criarHostZabbix({
+            name: formData.name.trim(),
+            ip: formData.ip.trim(),
+            monitor_method: formData.monitor_method,
+            snmp_community: formData.snmp_community?.trim() || null,
+            zabbix_proxy_name: zabbixProxyName
+          })
+        }
+      } catch (error) {
+        console.error('Erro ao sincronizar com Zabbix:', error)
+        zabbixError = 'Não foi possível sincronizar com o Zabbix'
+      }
+
+      // Salvar no Supabase
+      const deviceDataComZabbix = {
+        ...deviceData,
+        zabbix_host_id: zabbixHostId
+      }
+
       if (device?.id) {
         // Atualizar
         const { error } = await supabase
           .from('devices')
-          .update(deviceData)
+          .update(deviceDataComZabbix)
           .eq('id', device.id)
         
         if (error) throw error
@@ -202,12 +240,18 @@ export default function DispositivoModal({ isOpen, onClose, onSave, device }: Di
         // Inserir
         const { error } = await supabase
           .from('devices')
-          .insert(deviceData)
+          .insert(deviceDataComZabbix)
         
         if (error) throw error
       }
 
-      onSave()
+      if (zabbixError) {
+        setErrors({ 
+          submit: `Dispositivo salvo mas não sincronizado com o Zabbix. ${zabbixError}` 
+        })
+      } else {
+        onSave()
+      }
     } catch (error) {
       console.error('Erro ao salvar dispositivo:', error)
       setErrors({ submit: 'Erro ao salvar dispositivo. Tente novamente.' })
