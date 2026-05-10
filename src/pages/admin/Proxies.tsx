@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, RefreshCw } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { getProxies } from '../../lib/zabbix'
 import ProxyModal from '../../components/admin/ProxyModal'
 import type { Proxy } from '../../types/proxy'
 
 export default function Proxies() {
   const [proxies, setProxies] = useState<Proxy[]>([])
   const [loading, setLoading] = useState(true)
+  const [syncing, setSyncing] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [proxyEditando, setProxyEditando] = useState<Proxy | null>(null)
   const [proxyExcluindo, setProxyExcluindo] = useState<Proxy | null>(null)
@@ -20,10 +22,77 @@ export default function Proxies() {
 
       if (error) throw error
       setProxies(data || [])
+      
+      // Após carregar, sincronizar com Zabbix
+      await sincronizarComZabbix(data || [])
     } catch (error) {
       console.error('Erro ao carregar proxies:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const sincronizarComZabbix = async (proxiesData: Proxy[]) => {
+    if (proxiesData.length === 0) return
+    
+    setSyncing(true)
+    try {
+      // Buscar proxies do Zabbix
+      const zabbixProxies = await getProxies()
+      
+      // Mapear proxies do Zabbix por nome
+      const zabbixProxyMap = new Map(
+        zabbixProxies.map((zp: any) => [zp.name, zp])
+      )
+      
+      // Atualizar status de cada proxy
+      for (const proxy of proxiesData) {
+        const zabbixProxy = zabbixProxyMap.get(proxy.zabbix_proxy_name)
+        
+        let status: 'online' | 'offline' | 'unknown' = 'unknown'
+        let lastSeen: string | null = null
+        
+        if (zabbixProxy) {
+          // Mapear state do Zabbix para status do NOC VLUMA
+          if (zabbixProxy.state === '2') {
+            status = 'online'
+          } else if (zabbixProxy.state === '1') {
+            status = 'offline'
+          }
+          
+          // Converter lastaccess de Unix timestamp para ISO string
+          if (zabbixProxy.lastaccess) {
+            lastSeen = new Date(zabbixProxy.lastaccess * 1000).toISOString()
+          }
+        }
+        
+        // Atualizar no Supabase se houver mudança
+        if (proxy.status !== status || proxy.last_seen !== lastSeen) {
+          await supabase
+            .from('proxies')
+            .update({
+              status,
+              last_seen: lastSeen,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', proxy.id)
+        }
+      }
+      
+      // Recarregar lista após sincronização
+      const { data: updatedData } = await supabase
+        .from('proxies')
+        .select('*, tenant:tenants(name, slug)')
+        .order('created_at', { ascending: false })
+      
+      if (updatedData) {
+        setProxies(updatedData)
+      }
+    } catch (error) {
+      console.error('Erro ao sincronizar com Zabbix:', error)
+      // Tratar erro silenciosamente - não quebrar a tela
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -107,6 +176,10 @@ export default function Proxies() {
     carregarProxies()
   }
 
+  const handleManualSync = async () => {
+    await sincronizarComZabbix(proxies)
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -119,16 +192,34 @@ export default function Proxies() {
     <div className="p-6">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-noc-text">
-          Gerenciamento de Proxies
-        </h1>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="flex items-center space-x-2 px-4 py-2 bg-noc-primary text-gray-900 rounded-lg hover:bg-green-600 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Novo Proxy</span>
-        </button>
+        <div className="flex items-center space-x-4">
+          <h1 className="text-2xl font-bold text-noc-text">
+            Gerenciamento de Proxies
+          </h1>
+          {syncing && (
+            <div className="flex items-center space-x-2 text-noc-muted text-sm">
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              <span>Sincronizando...</span>
+            </div>
+          )}
+        </div>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={handleManualSync}
+            disabled={syncing}
+            className="flex items-center space-x-2 px-4 py-2 border border-noc-border rounded-lg text-noc-text hover:bg-noc-border/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+            <span>Sincronizar</span>
+          </button>
+          <button
+            onClick={() => setModalOpen(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-noc-primary text-gray-900 rounded-lg hover:bg-green-600 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Novo Proxy</span>
+          </button>
+        </div>
       </div>
 
       {/* Tabela */}
