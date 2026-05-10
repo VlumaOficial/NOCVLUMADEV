@@ -4,7 +4,8 @@ import {
   Users, 
   Server, 
   Settings, 
-  LogOut 
+  LogOut, 
+  Monitor 
 } from 'lucide-react'
 import Footer from '../components/Footer'
 
@@ -33,6 +34,11 @@ export default function SuperAdminLayout() {
       icon: <Server className="w-5 h-5" />,
       label: 'Proxies',
       path: '/admin/proxies'
+    },
+    {
+      icon: <Monitor className="w-5 h-5" />,
+      label: 'Dispositivos',
+      path: '/admin/dispositivos'
     },
     {
       icon: <Settings className="w-5 h-5" />,

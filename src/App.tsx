@@ -8,6 +8,7 @@ import AdminDashboard from './pages/admin/Dashboard'
 import Clientes from './pages/admin/Clientes'
 import Proxies from './pages/admin/Proxies'
 import Configuracoes from './pages/admin/Configuracoes'
+import Dispositivos from './pages/admin/Dispositivos'
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/admin" element={<SuperAdminLayout />}>
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="clientes" element={<Clientes />} />
+          <Route path="dispositivos" element={<Dispositivos />} />
           <Route path="proxies" element={<Proxies />} />
           <Route path="configuracoes" element={<Configuracoes />} />
         </Route>
