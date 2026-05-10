@@ -31,15 +31,18 @@ export default function ClienteModal({ isOpen, onClose, onSave, cliente }: Clien
   }, [cliente])
 
   useEffect(() => {
-    // Auto-gerar slug a partir do nome
-    if (formData.name && !formData.slug) {
-      const slug = formData.name
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^a-z0-9-]/g, '')
-      setFormData(prev => ({ ...prev, slug }))
-    }
-  }, [formData.name])
+  if (!cliente?.id) {
+    const slug = formData.name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+    setFormData(prev => ({ ...prev, slug }))
+  }
+}, [formData.name, cliente?.id])
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
