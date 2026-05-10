@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
-import { X, ChevronLeft, ChevronRight, CheckCircle, XCircle } from 'lucide-react'
+import { X, ChevronLeft, CheckCircle, XCircle } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { getHosts } from '../../lib/zabbix'
 import type { Device } from '../../types/device'
 
 interface DispositivoModalProps {

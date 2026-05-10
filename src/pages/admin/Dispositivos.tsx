@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Pencil, Trash2, Monitor } from 'lucide-react'
+import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import DispositivoModal from '../../components/admin/DispositivoModal'
 import type { Device } from '../../types/device'
