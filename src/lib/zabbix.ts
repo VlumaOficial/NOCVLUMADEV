@@ -122,7 +122,8 @@ export async function criarHostZabbix(params: {
     hostParams.templates = [{ templateid: templates[0].templateid }]
   }
 
-  // 6. Adicionar proxy se fornecido (Zabbix 7.0: usar proxyid direto)
+  // 6. Adicionar proxy (Zabbix 7.0: sempre enviar proxyid, 0 = sem proxy)
+  hostParams.proxyid = 0
   if (params.zabbix_proxy_name) {
     const proxies = await callZabbixAPI('proxy.get', {
       output: ['proxyid', 'name'],
