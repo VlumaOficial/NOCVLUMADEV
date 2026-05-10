@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { getProxies } from '../../lib/zabbix'
 import ProxyModal from '../../components/admin/ProxyModal'
 import type { Proxy } from '../../types/proxy'
+import type { ZabbixProxy } from '../../types/zabbix'
 
 export default function Proxies() {
   const [proxies, setProxies] = useState<Proxy[]>([])
@@ -42,7 +43,7 @@ export default function Proxies() {
       
       // Mapear proxies do Zabbix por nome
       const zabbixProxyMap = new Map(
-        zabbixProxies.map((zp: any) => [zp.name, zp])
+        zabbixProxies.map((zp: ZabbixProxy) => [zp.name, zp])
       )
       
       // Atualizar status de cada proxy
@@ -62,7 +63,7 @@ export default function Proxies() {
           
           // Converter lastaccess de Unix timestamp para ISO string
           if (zabbixProxy.lastaccess) {
-            lastSeen = new Date(zabbixProxy.lastaccess * 1000).toISOString()
+            lastSeen = new Date(parseInt(zabbixProxy.lastaccess) * 1000).toISOString()
           }
         }
         
