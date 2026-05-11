@@ -195,13 +195,13 @@ export async function sincronizarStatusDispositivos(
   if (hostIds.length === 0) return []
 
   const hosts = await callZabbixAPI('host.get', {
-    output: ['hostid', 'available'],
+    output: ['hostid', 'active_available'],
     hostids: hostIds
   })
 
-  return hosts.map((host: { hostid: string; available: string }) => ({
+  return hosts.map((host: { hostid: string; active_available: string }) => ({
     id: devices.find(d => d.zabbix_host_id === host.hostid)?.id || '',
-    status: host.available === '1' ? 'online' : 
-            host.available === '2' ? 'offline' : 'unknown'
+    status: host.active_available === '1' ? 'online' : 
+            host.active_available === '2' ? 'offline' : 'unknown'
   }))
 }
