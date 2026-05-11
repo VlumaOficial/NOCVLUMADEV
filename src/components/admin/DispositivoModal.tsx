@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, ChevronLeft, CheckCircle, XCircle } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { criarHostZabbix, atualizarHostZabbix } from '../../lib/zabbix'
+import { criarHostZabbix, atualizarHostZabbix, testarConectividadeReal, callZabbixAPI } from '../../lib/zabbix'
 import type { Device } from '../../types/device'
 
 interface DispositivoModalProps {
@@ -148,36 +148,23 @@ export default function DispositivoModal({ isOpen, onClose, onSave, device }: Di
   }
 
   const testarConectividade = async () => {
+    if (!formData.ip) return
     setTestando(true)
     setTestResult(null)
-    
-    try {
-      // Chamar Edge Function para testar conectividade
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/zabbix-api`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-        },
-        body: JSON.stringify({
-          method: 'host.get',
-          params: {
-            output: ['hostid', 'host', 'name', 'status'],
-            filter: {
-              ip: formData.ip
-            }
-          }
-        })
-      })
 
-      const data = await response.json()
-      
-      if (data.error) {
-        setTestResult('error')
-      } else if (data.result && data.result.length > 0) {
-        setTestResult('success')
+    try {
+      // Se o dispositivo já tem zabbix_host_id, testar via Zabbix
+      if (formData.zabbix_host_id) {
+        const status = await testarConectividadeReal(formData.zabbix_host_id)
+        setTestResult(status === 'online' ? 'success' : 'error')
       } else {
-        setTestResult('error')
+        // Dispositivo ainda não cadastrado no Zabbix — testar via ICMP simples
+        // Buscar hosts com esse IP para ver se existe no Zabbix
+        const hosts = await callZabbixAPI('host.get', {
+          output: ['hostid'],
+          filter: { ip: formData.ip }
+        })
+        setTestResult(hosts.length > 0 ? 'success' : 'error')
       }
     } catch (error) {
       console.error('Erro ao testar conectividade:', error)

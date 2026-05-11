@@ -259,3 +259,41 @@ export async function excluirProxyZabbix(proxyName: string): Promise<void> {
   // Deletar proxy
   await callZabbixAPI('proxy.delete', [proxyid])
 }
+
+export async function testarConectividadeReal(
+  zabbixHostId: string
+): Promise<'online' | 'offline' | 'unknown'> {
+
+  // 1. Buscar item icmpping do host
+  const items = await callZabbixAPI('item.get', {
+    output: ['itemid', 'lastclock'],
+    hostids: [zabbixHostId],
+    filter: { key_: 'icmpping' }
+  })
+
+  if (items.length === 0) return 'unknown'
+
+  const item = items[0]
+  const lastclockAntes = item.lastclock
+
+  // 2. Disparar check agora via task.create
+  await callZabbixAPI('task.create', [
+    { type: 6, request: { itemid: item.itemid } }
+  ])
+
+  // 3. Polling aguardando novo resultado (max 30 segundos)
+  for (let i = 0; i < 10; i++) {
+    await new Promise(resolve => setTimeout(resolve, 3000))
+
+    const resultado = await callZabbixAPI('item.get', {
+      output: ['lastvalue', 'lastclock'],
+      itemids: [item.itemid]
+    })
+
+    if (resultado.length > 0 && resultado[0].lastclock !== lastclockAntes) {
+      return resultado[0].lastvalue === '1' ? 'online' : 'offline'
+    }
+  }
+
+  return 'unknown'
+}
