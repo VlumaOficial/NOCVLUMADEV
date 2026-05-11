@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Copy } from 'lucide-react'
+import { X, Copy, Check } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { criarProxyZabbix } from '../../lib/zabbix'
 import type { Proxy } from '../../types/proxy'
@@ -34,6 +34,7 @@ export default function ProxyModal({ isOpen, onClose, onSave, proxy }: ProxyModa
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [loadingTenants, setLoadingTenants] = useState(false)
+  const [copiado, setCopiado] = useState(false)
 
   useEffect(() => {
     if (proxy) {
@@ -181,6 +182,8 @@ docker exec -u 0 ${formData.zabbix_proxy_name} apt-get install -y netcat-openbsd
 docker exec -u 0 ${formData.zabbix_proxy_name} chmod 4711 /usr/bin/fping`
 
     navigator.clipboard.writeText(command)
+    setCopiado(true)
+    setTimeout(() => setCopiado(false), 2000)
   }
 
   if (!isOpen) return null
@@ -330,10 +333,23 @@ docker exec -u 0 ${formData.zabbix_proxy_name} chmod 4711 /usr/bin/fping`
                 <button
                   type="button"
                   onClick={copyDockerCommand}
-                  className="flex items-center space-x-1 px-3 py-1 text-xs bg-noc-primary text-gray-900 rounded hover:bg-green-600 transition-colors"
+                  className={`flex items-center space-x-1 px-3 py-1 text-xs rounded transition-colors ${
+                    copiado 
+                      ? 'bg-green-500 text-white' 
+                      : 'bg-noc-primary text-gray-900 hover:bg-green-600'
+                  }`}
                 >
-                  <Copy className="w-3 h-3" />
-                  <span>Copiar</span>
+                  {copiado ? (
+                    <>
+                      <Check className="w-3 h-3" />
+                      <span>Copiado!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3" />
+                      <span>Copiar</span>
+                    </>
+                  )}
                 </button>
               </div>
               <div className="bg-noc-bg border border-noc-border rounded-lg p-4">
