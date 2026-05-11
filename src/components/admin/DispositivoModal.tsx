@@ -56,6 +56,28 @@ export default function DispositivoModal({ isOpen, onClose, onSave, device }: Di
   }, [device])
 
   useEffect(() => {
+    if (isOpen && !device) {
+      setEtapa(1)
+      setErrors({})
+      setTestResult(null)
+      setFormData({
+        tenant_id: '',
+        proxy_id: '',
+        name: '',
+        ip: '',
+        type: 'switch',
+        manufacturer: '',
+        model: '',
+        monitor_method: 'snmp_v2c',
+        snmp_community: '',
+        snmp_version: '2c',
+        zabbix_host_id: '',
+        status: 'unknown'
+      })
+    }
+  }, [isOpen, device])
+
+  useEffect(() => {
     const carregarDados = async () => {
       try {
         // Carregar tenants
@@ -251,9 +273,8 @@ export default function DispositivoModal({ isOpen, onClose, onSave, device }: Di
         setErrors({ 
           submit: `Dispositivo salvo mas não sincronizado com o Zabbix. ${zabbixError}` 
         })
-      } else {
-        onSave()
       }
+      onSave()
     } catch (error) {
       console.error('Erro ao salvar dispositivo:', error)
       setErrors({ submit: 'Erro ao salvar dispositivo. Tente novamente.' })
@@ -269,6 +290,13 @@ export default function DispositivoModal({ isOpen, onClose, onSave, device }: Di
       }).filter(Boolean)
     : []
 
+  const handleClose = () => {
+    setEtapa(1)
+    setErrors({})
+    setTestResult(null)
+    onClose()
+  }
+
   if (!isOpen) return null
 
   return (
@@ -280,7 +308,7 @@ export default function DispositivoModal({ isOpen, onClose, onSave, device }: Di
             {device?.id ? 'Editar Dispositivo' : 'Novo Dispositivo'}
           </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-noc-muted hover:text-noc-text transition-colors"
           >
             <X className="w-5 h-5" />
@@ -450,7 +478,7 @@ export default function DispositivoModal({ isOpen, onClose, onSave, device }: Di
               <div className="flex justify-between">
                 <button
                   type="button"
-                  onClick={() => setEtapa(1)}
+                  onClick={handleClose}
                   className="px-4 py-2 border border-noc-border rounded-md text-noc-text hover:bg-noc-border/50 transition-colors"
                 >
                   Cancelar
