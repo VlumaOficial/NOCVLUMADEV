@@ -214,7 +214,7 @@ export async function criarProxyZabbix(params: {
   const result = await callZabbixAPI('proxy.create', {
     name: params.name,
     operating_mode: 0,
-    tls_connect: 2,
+    tls_connect: 1,
     tls_accept: 2,
     tls_psk_identity: params.psk_identity,
     tls_psk: params.psk_key
