@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, Copy } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { criarProxyZabbix } from '../../lib/zabbix'
 import type { Proxy } from '../../types/proxy'
 
 interface Tenant {
@@ -133,6 +134,17 @@ export default function ProxyModal({ isOpen, onClose, onSave, proxy }: ProxyModa
           .insert(proxyData)
         
         if (error) throw error
+
+        // Criar proxy no Zabbix
+        try {
+          await criarProxyZabbix({
+            name: formData.zabbix_proxy_name.trim(),
+            psk_identity: formData.psk_identity.trim(),
+            psk_key: formData.psk_key.trim()
+          })
+        } catch (zabbixError) {
+          console.warn('Proxy salvo mas não criado no Zabbix:', zabbixError)
+        }
       }
 
       onSave()

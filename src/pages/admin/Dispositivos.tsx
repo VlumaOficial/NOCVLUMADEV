@@ -70,6 +70,13 @@ export default function Dispositivos() {
     carregarDispositivos()
   }, [])
 
+  useEffect(() => {
+    const intervalo = setInterval(() => {
+      carregarDispositivos()
+    }, 30000)
+    return () => clearInterval(intervalo)
+  }, [])
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'online':

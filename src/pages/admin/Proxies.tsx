@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Plus, Pencil, Trash2, RefreshCw } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-import { getProxies } from '../../lib/zabbix'
+import { getProxies, criarProxyZabbix, excluirProxyZabbix } from '../../lib/zabbix'
 import ProxyModal from '../../components/admin/ProxyModal'
 import type { Proxy } from '../../types/proxy'
 import type { ZabbixProxy } from '../../types/zabbix'
@@ -101,6 +101,13 @@ export default function Proxies() {
     carregarProxies()
   }, [])
 
+  useEffect(() => {
+    const intervalo = setInterval(() => {
+      carregarProxies()
+    }, 30000)
+    return () => clearInterval(intervalo)
+  }, [])
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'online':
@@ -147,16 +154,23 @@ export default function Proxies() {
 
   const confirmarExclusao = async () => {
     if (!proxyExcluindo) return
-
     setLoading(true)
     try {
+      // 1. Excluir no Zabbix primeiro (desassocia hosts automaticamente)
+      try {
+        await excluirProxyZabbix(proxyExcluindo.zabbix_proxy_name)
+      } catch (zabbixError) {
+        console.warn('Aviso: não foi possível excluir no Zabbix:', zabbixError)
+        // Continua mesmo se Zabbix falhar
+      }
+
+      // 2. Excluir no Supabase
       const { error } = await supabase
         .from('proxies')
         .delete()
         .eq('id', proxyExcluindo.id)
-      
       if (error) throw error
-      
+
       setProxies(proxies.filter(p => p.id !== proxyExcluindo.id))
       setProxyExcluindo(null)
     } catch (error) {

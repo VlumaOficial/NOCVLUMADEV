@@ -205,3 +205,48 @@ export async function sincronizarStatusDispositivos(
             host.active_available === '2' ? 'offline' : 'unknown'
   }))
 }
+
+export async function criarProxyZabbix(params: {
+  name: string
+  psk_identity: string
+  psk_key: string
+}): Promise<string> {
+  const result = await callZabbixAPI('proxy.create', {
+    name: params.name,
+    operating_mode: 0,
+    tls_connect: 2,
+    tls_accept: 2,
+    tls_psk_identity: params.psk_identity,
+    tls_psk: params.psk_key
+  })
+  return result.proxyids[0]
+}
+
+export async function excluirProxyZabbix(proxyName: string): Promise<void> {
+  // Buscar proxyid pelo nome
+  const proxies = await callZabbixAPI('proxy.get', {
+    output: ['proxyid', 'name'],
+    filter: { name: [proxyName] }
+  })
+  if (proxies.length === 0) return
+
+  const proxyid = proxies[0].proxyid
+
+  // Buscar hosts vinculados ao proxy
+  const hosts = await callZabbixAPI('host.get', {
+    output: ['hostid'],
+    proxyids: [proxyid]
+  })
+
+  // Desassociar hosts do proxy antes de deletar
+  if (hosts.length > 0) {
+    await callZabbixAPI('host.massupdate', {
+      hosts: hosts.map((h: { hostid: string }) => ({ hostid: h.hostid })),
+      monitored_by: 0,
+      proxyid: 0
+    })
+  }
+
+  // Deletar proxy
+  await callZabbixAPI('proxy.delete', [proxyid])
+}
