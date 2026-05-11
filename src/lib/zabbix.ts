@@ -191,19 +191,28 @@ export async function sincronizarStatusDispositivos(
   const hostIds = devices
     .filter(d => d.zabbix_host_id)
     .map(d => d.zabbix_host_id as string)
-
   if (hostIds.length === 0) return []
 
-  const hosts = await callZabbixAPI('host.get', {
-    output: ['hostid', 'active_available'],
-    hostids: hostIds
+  const items = await callZabbixAPI('item.get', {
+    output: ['hostid', 'lastvalue', 'lastclock'],
+    hostids: hostIds,
+    filter: { key_: 'icmpping' }
   })
 
-  return hosts.map((host: { hostid: string; active_available: string }) => ({
-    id: devices.find(d => d.zabbix_host_id === host.hostid)?.id || '',
-    status: host.active_available === '1' ? 'online' : 
-            host.active_available === '2' ? 'offline' : 'unknown'
-  }))
+  return devices
+    .filter(d => d.zabbix_host_id)
+    .map(d => {
+      const item = items.find((i: { hostid: string; lastvalue: string; lastclock: string }) =>
+        i.hostid === d.zabbix_host_id
+      )
+      if (!item || item.lastclock === '0') {
+        return { id: d.id, status: 'unknown' as const }
+      }
+      return {
+        id: d.id,
+        status: item.lastvalue === '1' ? 'online' as const : 'offline' as const
+      }
+    })
 }
 
 export async function criarProxyZabbix(params: {
