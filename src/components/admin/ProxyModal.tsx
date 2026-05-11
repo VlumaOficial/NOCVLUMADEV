@@ -145,7 +145,12 @@ export default function ProxyModal({ isOpen, onClose, onSave, proxy }: ProxyModa
   }
 
   const copyDockerCommand = () => {
-    const command = `docker run --name ${formData.zabbix_proxy_name} \\
+    const command = `# Passo 1: Criar volume e salvar PSK
+docker volume create zabbix-proxy-psk
+docker run --rm -v zabbix-proxy-psk:/enc alpine sh -c "echo '${formData.psk_key}' > /enc/proxy.psk"
+
+# Passo 2: Subir o container do proxy
+docker run --name ${formData.zabbix_proxy_name} \\
   --restart unless-stopped \\
   --sysctl net.ipv4.ping_group_range="0 2147483647" \\
   -e ZBX_HOSTNAME="${formData.zabbix_proxy_name}" \\
@@ -156,7 +161,12 @@ export default function ProxyModal({ isOpen, onClose, onSave, proxy }: ProxyModa
   -e ZBX_TLSPSKIDENTITY="${formData.psk_identity}" \\
   -e ZBX_TLSPSKFILE="/var/lib/zabbix/enc/proxy.psk" \\
   -v zabbix-proxy-psk:/var/lib/zabbix/enc \\
-  -d zabbix/zabbix-proxy-sqlite3:ubuntu-7.0-latest`
+  -d zabbix/zabbix-proxy-sqlite3:ubuntu-7.0-latest
+
+# Passo 3: Instalar ferramentas e corrigir permissões
+docker exec -u 0 ${formData.zabbix_proxy_name} apt-get update -qq && \\
+docker exec -u 0 ${formData.zabbix_proxy_name} apt-get install -y netcat-openbsd snmp fping && \\
+docker exec -u 0 ${formData.zabbix_proxy_name} chmod 4711 /usr/bin/fping`
 
     navigator.clipboard.writeText(command)
   }
